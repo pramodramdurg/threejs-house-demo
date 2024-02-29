@@ -19,6 +19,36 @@ const scene = new THREE.Scene()
  */
 const textureLoader = new THREE.TextureLoader()
 
+const doorColorTexture = textureLoader.load('./textures/door/color.jpg')
+const doorAlphaTexture = textureLoader.load('./textures/door/alpha.jpg')
+const doorAmbientOcclusiontexture = textureLoader.load('./textures/door/ambientOcclusion.jpg')
+const doorHeightTexture = textureLoader.load('./textures/door/height.jpg')
+const doorNormalTexture = textureLoader.load('./textures/door/normal.jpg')
+
+
+const brickColorTexture = textureLoader.load('./textures/bricks/color.jpg')
+const brickNormalTexture = textureLoader.load('./textures/bricks/normal.jpg')
+brickColorTexture.colorSpace = THREE.SRGBColorSpace
+
+
+const grassColorTexture = textureLoader.load('./textures/grass/color.jpg')
+const grassAmbientOcclusionTexture = textureLoader.load('./textures/grass/ambientOcclusion.jpg')
+const grassNormalTexture = textureLoader.load('./textures/grass/normal.jpg')
+grassColorTexture.colorSpace = THREE.SRGBColorSpace
+
+grassColorTexture.repeat.set(8,8)
+grassColorTexture.wrapS = THREE.RepeatWrapping
+grassColorTexture.wrapT = THREE.RepeatWrapping
+
+grassAmbientOcclusionTexture.repeat.set(8,8)
+grassAmbientOcclusionTexture.wrapS = THREE.RepeatWrapping
+grassAmbientOcclusionTexture.wrapT = THREE.RepeatWrapping
+
+
+grassNormalTexture.repeat.set(8,8)
+grassNormalTexture.wrapS = THREE.RepeatWrapping
+grassNormalTexture.wrapT = THREE.RepeatWrapping
+
 /**
  * House
  */
@@ -29,7 +59,10 @@ scene.add(house)
 //walls
 const walls = new THREE.Mesh(
     new THREE.BoxGeometry(4,2.5,4),
-    new THREE.MeshStandardMaterial({color:'#ac8e82'})
+    new THREE.MeshStandardMaterial({
+        map: brickColorTexture,
+        normalMap: brickNormalTexture
+    })
 )
 walls.position.y = 1.25
 house.add(walls)
@@ -47,7 +80,14 @@ house.add(roof)
 //door
 const door = new THREE.Mesh(
     new THREE.PlaneGeometry(2,2),
-    new THREE.MeshStandardMaterial({})
+    new THREE.MeshStandardMaterial({
+        map: doorColorTexture,
+        transparent: true,
+        alphaMap: doorAlphaTexture,
+        aoMap: doorAmbientOcclusiontexture,
+        height: doorHeightTexture,
+        normalMap: doorNormalTexture
+    })
 )
 door.position.z = 2.01
 door.position.y = 1
@@ -105,7 +145,12 @@ const z = Math.cos(angle) * radius
 // Floor
 const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 20),
-    new THREE.MeshStandardMaterial({ color: '#a9c388' })
+    new THREE.MeshStandardMaterial({ 
+    map: grassColorTexture,
+    normalMap: grassNormalTexture,
+    aoMap : grassAmbientOcclusionTexture,
+    
+})
 )
 floor.rotation.x = - Math.PI * 0.5
 floor.position.y = 0
@@ -115,12 +160,12 @@ scene.add(floor)
  * Lights
  */
 // Ambient light
-const ambientLight = new THREE.AmbientLight('#b9d5ff', 0.2)
+const ambientLight = new THREE.AmbientLight('#b9d5ff', 0.1)
 gui.add(ambientLight, 'intensity').min(0).max(1).step(0.001)
 scene.add(ambientLight)
 
 // Directional light
-const moonLight = new THREE.DirectionalLight('#b9d5ff', 0.5)
+const moonLight = new THREE.DirectionalLight('#b9d5ff', 0.2)
 moonLight.position.set(4, 5, - 2)
 gui.add(moonLight, 'intensity').min(0).max(1).step(0.001)
 gui.add(moonLight.position, 'x').min(- 5).max(5).step(0.001)
@@ -129,8 +174,16 @@ gui.add(moonLight.position, 'z').min(- 5).max(5).step(0.001)
 scene.add(moonLight)
 
 //Door light
+const doorLight = new THREE.PointLight('#ff7d46',1,7)
+doorLight.position.set(0,2.2,2.7)
+house.add(doorLight)
+
+const fog = new THREE.Fog('#262837',2,15)
+scene.fog = fog
 
 
+const ghost1 = new THREE.PointLight('#00ffff',5,3)
+scene.add(ghost1)
 /**
  * Sizes
  */
@@ -152,6 +205,7 @@ window.addEventListener('resize', () =>
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setClearColor('#262837')
 })
 
 /**
@@ -185,6 +239,13 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
+
+//ghost animate
+const gohst1Angle = elapsedTime
+
+ghost1.position.x = Math.cos(gohst1Angle)*4
+ghost1.position.y = Math.sin(gohst1Angle*3)
+ghost1.position.z = Math.sin(gohst1Angle)*4
 
     // Update controls
     controls.update()
